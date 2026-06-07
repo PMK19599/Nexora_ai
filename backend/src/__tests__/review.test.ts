@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { calculateSM2, calculateRetention, predictForgetDate } from '../services/reviewService';
 
 describe('SM-2 Algorithm', () => {

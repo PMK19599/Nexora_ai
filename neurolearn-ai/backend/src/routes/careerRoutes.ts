@@ -1,0 +1,15 @@
+import { Router } from 'express';
+import { uploadSyllabus, analyze, generateRoadmap, getGapAnalysis, getIndustryInsights, generateResume, getCareerPaths, getRoadmaps, getResumes } from '../controllers/careerController';
+import { protect } from '../middleware/auth';
+import { upload } from '../middleware/upload';
+const r = Router();
+r.post('/upload-syllabus', protect, upload.single('syllabus'), uploadSyllabus);
+r.post('/analyze', protect, analyze);
+r.post('/generate-roadmap', protect, generateRoadmap);
+r.get('/gap-analysis', protect, getGapAnalysis);
+r.get('/industry-insights', protect, getIndustryInsights);
+r.post('/generate-resume', protect, generateResume);
+r.get('/paths', protect, getCareerPaths);
+r.get('/roadmaps', protect, getRoadmaps);
+r.get('/resumes', protect, getResumes);
+export default r;

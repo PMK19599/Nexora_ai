@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { getTutors, registerAsTutor, requestSession, acceptSession, rateSession, getSchedule, getMySessions } from '../controllers/tutorController';
+import { protect } from '../middleware/auth';
+const r = Router();
+r.get('/', protect, getTutors);
+r.post('/register', protect, registerAsTutor);
+r.post('/request', protect, requestSession);
+r.post('/accept', protect, acceptSession);
+r.post('/rate', protect, rateSession);
+r.get('/schedule', protect, getSchedule);
+r.get('/sessions', protect, getMySessions);
+export default r;

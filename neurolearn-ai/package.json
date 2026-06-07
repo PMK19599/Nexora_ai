@@ -1,0 +1,22 @@
+{
+  "name": "neurolearn-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NeuroLearn AI - AI-Powered E-Learning Platform for Normal & Neurodivergent Students",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "seed": "cd backend && npm run seed",
+    "test": "cd backend && npm test && cd ../frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "test:e2e": "cd frontend && npx playwright test",
+    "start": "cd backend && npm start"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

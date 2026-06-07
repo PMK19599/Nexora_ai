@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { matchGroups, createGroup, getGroups, joinGroup, scheduleMeeting, getGroupMeetings } from '../controllers/groupController';
+import { protect } from '../middleware/auth';
+const r = Router();
+r.post('/match', protect, matchGroups);
+r.post('/create', protect, createGroup);
+r.get('/', protect, getGroups);
+r.post('/join', protect, joinGroup);
+r.post('/:groupId/schedule', protect, scheduleMeeting);
+r.get('/:groupId/meetings', protect, getGroupMeetings);
+export default r;

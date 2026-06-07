@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { getTopics, getTopic, createTopic, updateTopic, deleteTopic, getProgressDetails } from '../controllers/topicController';
+import { protect, authorize } from '../middleware/auth';
+const r = Router();
+r.get('/', protect, getTopics);
+r.get('/progress-details', protect, getProgressDetails);
+r.get('/:id', protect, getTopic);
+r.post('/', protect, authorize('admin'), createTopic);
+r.put('/:id', protect, authorize('admin'), updateTopic);
+r.delete('/:id', protect, authorize('admin'), deleteTopic);
+export default r;

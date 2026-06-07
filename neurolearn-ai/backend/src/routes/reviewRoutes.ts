@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { logAttempt, getQueue, getPrediction, getStats } from '../controllers/reviewController';
+import { protect } from '../middleware/auth';
+import { validate, reviewLogSchema } from '../middleware/validation';
+const r = Router();
+r.post('/log-attempt', protect, validate(reviewLogSchema), logAttempt);
+r.get('/queue', protect, getQueue);
+r.get('/prediction', protect, getPrediction);
+r.get('/stats', protect, getStats);
+export default r;

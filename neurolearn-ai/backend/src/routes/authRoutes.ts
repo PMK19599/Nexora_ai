@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { register, login, logout, getMe, updateProfile, getNotifications, markNotificationRead } from '../controllers/authController';
+import { protect } from '../middleware/auth';
+import { validate, registerSchema, loginSchema } from '../middleware/validation';
+const r = Router();
+r.post('/register', validate(registerSchema), register);
+r.post('/login', validate(loginSchema), login);
+r.post('/logout', protect, logout);
+r.get('/me', protect, getMe);
+r.put('/profile', protect, updateProfile);
+r.get('/notifications', protect, getNotifications);
+r.put('/notifications/:id/read', protect, markNotificationRead);
+export default r;

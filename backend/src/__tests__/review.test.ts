@@ -1,4 +1,5 @@
 /// <reference types="jest" />
+import { describe, it, expect } from '@jest/globals';
 import { calculateSM2, calculateRetention, predictForgetDate } from '../services/reviewService';
 
 describe('SM-2 Algorithm', () => {

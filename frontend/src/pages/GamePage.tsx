@@ -14,21 +14,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import toast from 'react-hot-toast';
 import SourceMaterialView from '@/components/reader/SourceMaterialView';
+import { speakText, stopSpeak } from '@/utils/helpers';
 
 type Phase = 'setup' | 'playing' | 'feedback' | 'result' | 'reading';
-
-// ===== TTS for quiz =====
-const speakText = (text: string, speed: number = 1) => {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text.replace(/[_]{2,}/g, 'blank'));
-  u.rate = speed;
-  const voices = window.speechSynthesis.getVoices();
-  const v = voices.find(x => x.lang.startsWith('en') && x.name.includes('Google')) || voices.find(x => x.lang.startsWith('en'));
-  if (v) u.voice = v;
-  window.speechSynthesis.speak(u);
-};
-const stopSpeak = () => window.speechSynthesis?.cancel();
 
 // ===== Confetti burst =====
 function ConfettiBurst() {

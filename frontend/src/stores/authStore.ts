@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { User, Notification } from '../types';
 import { authAPI } from '../services/api';
 import { connectSocket, disconnectSocket } from '../services/socket';
+import { extractError } from '../utils/helpers';
 
 interface AuthState {
   user: User | null;
@@ -19,17 +20,6 @@ interface AuthState {
   fetchNotifications: () => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
   unlockReward: (rewardId: string, xpCost: number) => Promise<void>;
-}
-
-// Extract best error message from any error shape
-function extractError(e: any, fallback: string): string {
-  // Axios error with backend message
-  if (e?.response?.data?.message) return e.response.data.message;
-  // Axios error array
-  if (e?.response?.data?.errors?.[0]?.message) return e.response.data.errors[0].message;
-  // Plain error message (not the useless "Request failed with status code X")
-  if (e?.message && !e.message.startsWith('Request failed')) return e.message;
-  return fallback;
 }
 
 export const useAuthStore = create<AuthState>()(

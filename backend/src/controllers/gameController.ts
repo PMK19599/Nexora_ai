@@ -7,6 +7,7 @@ import fs from 'fs';
 import { askAI, getEmbedding } from '../utils/ai';
 import { uploadToCloudinary } from '../config/cloudinary';
 import { sliceTextIntoChunks, getRepresentativeChunks } from '../utils/embeddings';
+import { asyncHandler, getRecentAccuracy, findSimilarUsers, createNotification } from '../utils/controllerUtils';
 
 async function generateQuestionsWithAI(text: string, count: number = 10, recentAccuracy: number = 70): Promise<any[]> {
   const localFallback = () => ({ questions: generateQuestionsFromText(text, count, recentAccuracy) });
@@ -145,8 +146,7 @@ function generateQuestionsFromText(text: string, count: number = 10, recentAccur
   return questions.slice(0, count);
 }
 
-export const createGameFromPDF = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const createGameFromPDF = asyncHandler(async (req: AuthRequest, res: Response) => {
     const file = req.file;
     if (!file) { res.status(400).json({ success: false, message: 'Please upload a PDF file' }); return; }
 
@@ -171,11 +171,7 @@ export const createGameFromPDF = async (req: AuthRequest, res: Response, next: N
       return;
     }
 
-    // ADAPTIVE LOGIC: Fetch recent performance
-    const recentSessions = await GameSession.find({ userId: req.user!._id }).sort({ createdAt: -1 }).limit(3);
-    const recentAccuracy = recentSessions.length > 0 
-      ? recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length 
-      : 70;
+    const recentAccuracy = await getRecentAccuracy(req.user!._id.toString());
 
     // Sliding-Window Chunking and Semantic Embeddings pipeline
     const chunks = sliceTextIntoChunks(text, 1000, 200);
@@ -220,11 +216,9 @@ export const createGameFromPDF = async (req: AuthRequest, res: Response, next: N
     });
 
     res.status(201).json({ success: true, data: game });
-  } catch (e) { next(e); }
-};
+});
 
-export const createGameFromText = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const createGameFromText = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { title, content, questionCount, gameType } = req.body;
 
     if (!content || content.trim().length < 50) {
@@ -232,11 +226,7 @@ export const createGameFromText = async (req: AuthRequest, res: Response, next: 
       return;
     }
 
-    // ADAPTIVE LOGIC: Fetch recent performance
-    const recentSessions = await GameSession.find({ userId: req.user!._id }).sort({ createdAt: -1 }).limit(3);
-    const recentAccuracy = recentSessions.length > 0 
-      ? recentSessions.reduce((sum, s) => sum + s.accuracy, 0) / recentSessions.length 
-      : 70;
+    const recentAccuracy = await getRecentAccuracy(req.user!._id.toString());
 
     const count = Math.min(parseInt(questionCount) || 10, 20);
     const questions = await generateQuestionsWithAI(content, count, recentAccuracy);
@@ -260,26 +250,20 @@ export const createGameFromText = async (req: AuthRequest, res: Response, next: 
     });
 
     res.status(201).json({ success: true, data: game });
-  } catch (e) { next(e); }
-};
+});
 
-export const getMyGames = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const getMyGames = asyncHandler(async (req: AuthRequest, res: Response) => {
     const games = await Game.find({ userId: req.user!._id }).sort({ createdAt: -1 }).select('-sourceContent');
     res.json({ success: true, data: games });
-  } catch (e) { next(e); }
-};
+});
 
-export const getGame = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const getGame = asyncHandler(async (req: AuthRequest, res: Response) => {
     const game = await Game.findById(req.params.id);
     if (!game) { res.status(404).json({ success: false, message: 'Game not found' }); return; }
     res.json({ success: true, data: game });
-  } catch (e) { next(e); }
-};
+});
 
-export const submitGameSession = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const submitGameSession = asyncHandler(async (req: AuthRequest, res: Response) => {
     const { gameId, answers, timeTaken } = req.body;
 
     const game = await Game.findById(gameId);
@@ -326,16 +310,7 @@ export const submitGameSession = async (req: AuthRequest, res: Response, next: N
       if (newLevel > oldLevel) {
         user.level = newLevel;
         levelUp = true;
-        // Create level up notification
-        const NotificationModel = require('../models/Notification').default || require('../models/Notification');
-        if (NotificationModel) {
-          await NotificationModel.create({
-            userId: user._id,
-            type: 'system',
-            title: `Level Up! 🎉`,
-            message: `Congratulations! You reached Level ${newLevel}! Keep learning to unlock new styles and rewards.`,
-          });
-        }
+        await createNotification(user._id, 'system', `Level Up! 🎉`, `Congratulations! You reached Level ${newLevel}! Keep learning to unlock new styles and rewards.`);
       }
 
       // Dynamic pacing adaptation logic based on recent session history
@@ -378,15 +353,7 @@ export const submitGameSession = async (req: AuthRequest, res: Response, next: N
         }
 
         if (autoAdapted) {
-          const NotificationModel = require('../models/Notification').default || require('../models/Notification');
-          if (NotificationModel) {
-            await NotificationModel.create({
-              userId: user._id,
-              type: 'system',
-              title: '🔄 Learning Environment Adapted!',
-              message: adaptationMsg,
-            });
-          }
+          await createNotification(user._id, 'system', '🔄 Learning Environment Adapted!', adaptationMsg);
         }
       }
 
@@ -420,21 +387,17 @@ export const submitGameSession = async (req: AuthRequest, res: Response, next: N
     }
 
     res.status(201).json({ success: true, data: { session, xpEarned, accuracy, score, totalPoints, levelUp, newLevel } });
-  } catch (e) { next(e); }
-};
+});
 
-export const getGameHistory = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const getGameHistory = asyncHandler(async (req: AuthRequest, res: Response) => {
     const sessions = await GameSession.find({ userId: req.user!._id })
       .populate('gameId', 'title gameType totalQuestions')
       .sort({ createdAt: -1 })
       .limit(20);
     res.json({ success: true, data: sessions });
-  } catch (e) { next(e); }
-};
+});
 
-export const getLeaderboard = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const getLeaderboard = asyncHandler(async (_req: AuthRequest, res: Response) => {
     const leaders = await GameSession.aggregate([
       { $group: { _id: '$userId', totalScore: { $sum: '$score' }, gamesPlayed: { $sum: 1 }, avgAccuracy: { $avg: '$accuracy' } } },
       { $sort: { totalScore: -1 } },
@@ -444,34 +407,18 @@ export const getLeaderboard = async (_req: AuthRequest, res: Response, next: Nex
       { $project: { name: '$user.name', avatar: '$user.avatar', totalScore: 1, gamesPlayed: 1, avgAccuracy: { $round: ['$avgAccuracy', 0] } } },
     ]);
     res.json({ success: true, data: leaders });
-  } catch (e) { next(e); }
-};
+});
 
-export const getRecommendedGames = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    // Collaborative filtering for curriculum sharing
-    const me = await User.findById(req.user!._id);
+export const getRecommendedGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { me, userIds } = await findSimilarUsers(req.user!._id.toString());
     if (!me) { res.status(404).json({ success: false, message: 'User not found' }); return; }
 
-    // Find similar users (same neurodivergent type, similar interests/skills)
-    const similarUsers = await User.find({
-      _id: { $ne: me._id },
-      $or: [
-        { neurodivergentType: me.neurodivergentType },
-        { interests: { $in: me.interests || [] } }
-      ]
-    }).limit(20);
-
-    const similarUserIds = similarUsers.map(u => u._id);
-
-    // Get highly rated or completed games from those similar users
     const recommendedGames = await Game.find({
-      userId: { $in: similarUserIds }
+      userId: { $in: userIds }
     })
     .sort({ createdAt: -1 })
     .limit(5)
     .populate('userId', 'name neurodivergentType');
 
     res.json({ success: true, data: recommendedGames });
-  } catch (e) { next(e); }
-};
+});

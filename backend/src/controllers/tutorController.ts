@@ -3,13 +3,12 @@ import { AuthRequest } from '../types';
 import * as svc from '../services/tutorService';
 import { PeerTutor, PeerSession, User } from '../models';
 import { Types } from 'mongoose';
+import { asyncHandler } from '../utils/controllerUtils';
 
-// Auto-seed sample tutors if none exist
 const ensureSampleTutors = async (currentUserId: string) => {
   const count = await PeerTutor.countDocuments();
   if (count > 0) return;
 
-  // Create sample tutor users + profiles
   const tutorData = [
     { name: 'Emma Wilson', email: `tutor_emma_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'], subjects: ['React', 'Node.js', 'TypeScript', 'MongoDB'], bio: 'Full-stack developer with 3 years experience. I love helping others learn web development!', rating: 4.7 },
     { name: 'James Chen', email: `tutor_james_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], subjects: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], bio: 'ML engineer passionate about making AI accessible to everyone.', rating: 4.5 },
@@ -34,59 +33,45 @@ const ensureSampleTutors = async (currentUserId: string) => {
   }
 };
 
-export const getTutors = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    await ensureSampleTutors(req.user!._id.toString());
+export const getTutors = asyncHandler(async (req: AuthRequest, res: Response) => {
+  await ensureSampleTutors(req.user!._id.toString());
 
-    if (req.query.subject) {
-      const tutors = await svc.findMatchingTutors(req.user!._id.toString(), req.query.subject as string);
-      res.json({ success: true, data: tutors });
-    } else {
-      const tutors = await PeerTutor.find({ isActive: true })
-        .populate('userId', 'name email avatar learningTrack neurodivergentType timezone')
-        .sort({ rating: -1 });
-      res.json({ success: true, data: tutors });
-    }
-  } catch (e) { next(e); }
-};
+  if (req.query.subject) {
+    const tutors = await svc.findMatchingTutors(req.user!._id.toString(), req.query.subject as string);
+    res.json({ success: true, data: tutors });
+  } else {
+    const tutors = await PeerTutor.find({ isActive: true })
+      .populate('userId', 'name email avatar learningTrack neurodivergentType timezone')
+      .sort({ rating: -1 });
+    res.json({ success: true, data: tutors });
+  }
+});
 
-export const registerAsTutor = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const existing = await PeerTutor.findOne({ userId: req.user!._id });
-    if (existing) {
-      const u = await PeerTutor.findOneAndUpdate({ userId: req.user!._id }, { ...req.body, isActive: true }, { new: true });
-      res.json({ success: true, data: u }); return;
-    }
-    res.status(201).json({ success: true, data: await PeerTutor.create({ userId: req.user!._id, ...req.body }) });
-  } catch (e) { next(e); }
-};
+export const registerAsTutor = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const existing = await PeerTutor.findOne({ userId: req.user!._id });
+  if (existing) {
+    const u = await PeerTutor.findOneAndUpdate({ userId: req.user!._id }, { ...req.body, isActive: true }, { new: true });
+    res.json({ success: true, data: u }); return;
+  }
+  res.status(201).json({ success: true, data: await PeerTutor.create({ userId: req.user!._id, ...req.body }) });
+});
 
-export const requestSession = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    res.status(201).json({ success: true, data: await svc.requestSession(req.user!._id.toString(), req.body.tutorId, req.body.subject, req.body.scheduledAt, req.body.duration) });
-  } catch (e) { next(e); }
-};
+export const requestSession = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.status(201).json({ success: true, data: await svc.requestSession(req.user!._id.toString(), req.body.tutorId, req.body.subject, req.body.scheduledAt, req.body.duration) });
+});
 
-export const acceptSession = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    res.json({ success: true, data: await svc.acceptSession(req.body.sessionId, req.user!._id.toString()) });
-  } catch (e) { next(e); }
-};
+export const acceptSession = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await svc.acceptSession(req.body.sessionId, req.user!._id.toString()) });
+});
 
-export const rateSession = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    res.json({ success: true, data: await svc.rateSession(req.body.sessionId, req.user!._id.toString(), req.body.rating, req.body.feedback) });
-  } catch (e) { next(e); }
-};
+export const rateSession = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await svc.rateSession(req.body.sessionId, req.user!._id.toString(), req.body.rating, req.body.feedback) });
+});
 
-export const getSchedule = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    res.json({ success: true, data: await svc.getTutorSchedule(req.user!._id.toString()) });
-  } catch (e) { next(e); }
-};
+export const getSchedule = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await svc.getTutorSchedule(req.user!._id.toString()) });
+});
 
-export const getMySessions = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    res.json({ success: true, data: await PeerSession.find({ $or: [{ tutorId: req.user!._id }, { studentId: req.user!._id }] }).populate('tutorId', 'name email avatar').populate('studentId', 'name email avatar').sort({ scheduledAt: -1 }) });
-  } catch (e) { next(e); }
-};
+export const getMySessions = asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: await PeerSession.find({ $or: [{ tutorId: req.user!._id }, { studentId: req.user!._id }] }).populate('tutorId', 'name email avatar').populate('studentId', 'name email avatar').sort({ scheduledAt: -1 }) });
+});

@@ -50,8 +50,8 @@ export const errorHandler = (err: any, _req: Request, res: Response, _next: Next
   if (err.name === 'JsonWebTokenError') { statusCode = 401; message = 'Invalid session. Please log in again.'; }
   if (err.name === 'TokenExpiredError') { statusCode = 401; message = 'Session expired. Please log in again.'; }
 
-  // Never send raw stack trace or generic "Internal Server Error" — always helpful message
-  if (statusCode === 500 && message === 'Internal Server Error') {
+  // In production, never expose internal error details for 500s
+  if (statusCode === 500) {
     message = 'Something went wrong on our end. Please try again in a moment.';
   }
 

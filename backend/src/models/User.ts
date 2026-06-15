@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../types';
+import { getJwtSecret } from '../middleware/auth';
 
 const accessibilitySchema = new Schema({
   fontSize: { type: String, enum: ['small','medium','normal','large','xlarge'], default: 'medium' },
@@ -61,7 +62,7 @@ userSchema.methods.comparePassword = async function(password: string): Promise<b
 userSchema.methods.getSignedJwtToken = function(): string {
   return jwt.sign(
     { id: this._id, role: this.role },
-    process.env.JWT_SECRET || 'neurolearn-jwt-secret-dev-2026',
+    getJwtSecret(),
     { expiresIn: (process.env.JWT_EXPIRE || '7d') as any }
   );
 };

@@ -30,7 +30,12 @@ const ensureSampleTutors = async (currentUserId: string) => {
           { day: 'friday', startTime: '10:00', endTime: '15:00' },
         ],
       });
-    } catch {} // Skip if already exists
+    } catch (err: any) {
+      // Skip duplicate key errors (tutor already exists), log unexpected errors
+      if (err?.code !== 11000) {
+        console.warn(`[ensureSampleTutors] Failed to create tutor "${td.name}":`, err.message);
+      }
+    }
   }
 };
 

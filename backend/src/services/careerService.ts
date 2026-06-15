@@ -122,6 +122,7 @@ export const uploadAndAnalyzeSyllabus = async (userId: string, filePath: string,
     text = (await pdfParse(fs.readFileSync(filePath))).text;
   } catch (err: any) {
     console.error('[CareerService] Failed to parse syllabus PDF:', err.message || err);
+    throw new Error('Failed to parse the uploaded PDF. Please ensure it is a valid, text-based PDF file.');
   }
 
   // Upload to Cloudinary for reference storage
@@ -136,7 +137,9 @@ export const uploadAndAnalyzeSyllabus = async (userId: string, filePath: string,
   // Delete local temp file
   try {
     fs.unlinkSync(filePath);
-  } catch {}
+  } catch (err: any) {
+    console.warn(`[CareerService] Failed to clean up temp file "${filePath}":`, err.message);
+  }
 
   // Chunking and Embeddings pipeline
   const chunks = sliceTextIntoChunks(text, 1000, 200);

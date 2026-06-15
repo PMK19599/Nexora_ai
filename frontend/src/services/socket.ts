@@ -43,23 +43,34 @@ export const disconnectSocket = (): void => {
       socket.disconnect();
       socket = null;
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[Socket] Failed to disconnect cleanly:', err);
+    socket = null;
+  }
 };
 
 export const getSocket = (): Socket | null => socket;
 
 export const joinRoom = (id: string): void => {
-  try { socket?.emit('chat:join', id); } catch {}
+  try { socket?.emit('chat:join', id); } catch (err) {
+    console.warn(`[Socket] Failed to join room "${id}":`, err);
+  }
 };
 
 export const leaveRoom = (id: string): void => {
-  try { socket?.emit('chat:leave', id); } catch {}
+  try { socket?.emit('chat:leave', id); } catch (err) {
+    console.warn(`[Socket] Failed to leave room "${id}":`, err);
+  }
 };
 
 export const sendMessage = (roomId: string, message: string): void => {
-  try { socket?.emit('chat:message', { roomId, message }); } catch {}
+  try { socket?.emit('chat:message', { roomId, message }); } catch (err) {
+    console.warn(`[Socket] Failed to send message to room "${roomId}":`, err);
+  }
 };
 
 export const sendTyping = (roomId: string, isTyping: boolean): void => {
-  try { socket?.emit('chat:typing', { roomId, isTyping }); } catch {}
+  try { socket?.emit('chat:typing', { roomId, isTyping }); } catch (err) {
+    console.warn(`[Socket] Failed to send typing indicator to room "${roomId}":`, err);
+  }
 };

@@ -43,7 +43,9 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authAPI.login({ email, password });
           localStorage.setItem('token', data.token);
-          try { connectSocket(data.token); } catch {}
+          try { connectSocket(data.token); } catch (e: any) {
+            console.warn('[AuthStore] Socket connection failed after login:', e.message);
+          }
           set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
         } catch (e: any) {
           set({ isLoading: false });
@@ -56,7 +58,9 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { data } = await authAPI.register(userData);
           localStorage.setItem('token', data.token);
-          try { connectSocket(data.token); } catch {}
+          try { connectSocket(data.token); } catch (e: any) {
+            console.warn('[AuthStore] Socket connection failed after register:', e.message);
+          }
           set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false });
         } catch (e: any) {
           set({ isLoading: false });
@@ -65,9 +69,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        try { await authAPI.logout(); } catch {}
+        try { await authAPI.logout(); } catch (e: any) {
+          console.warn('[AuthStore] Logout API call failed:', e?.response?.data?.message || e.message);
+        }
         localStorage.removeItem('token');
-        try { disconnectSocket(); } catch {}
+        try { disconnectSocket(); } catch (e: any) {
+          console.warn('[AuthStore] Socket disconnect failed during logout:', e.message);
+        }
         set({ user: null, token: null, isAuthenticated: false, notifications: [], unreadCount: 0 });
       },
 
@@ -77,9 +85,12 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { data } = await authAPI.getMe();
-          try { connectSocket(token); } catch {}
+          try { connectSocket(token); } catch (e: any) {
+            console.warn('[AuthStore] Socket connection failed during loadUser:', e.message);
+          }
           set({ user: data.user, token, isAuthenticated: true, isLoading: false });
-        } catch {
+        } catch (e: any) {
+          console.warn('[AuthStore] Failed to load user session:', e?.response?.data?.message || e.message);
           localStorage.removeItem('token');
           set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         }
@@ -95,7 +106,9 @@ export const useAuthStore = create<AuthState>()(
           const { data } = await authAPI.getNotifications();
           const n = data.notifications || [];
           set({ notifications: n, unreadCount: n.filter((x: Notification) => !x.read).length });
-        } catch {}
+        } catch (e: any) {
+          console.warn('[AuthStore] Failed to fetch notifications:', e?.response?.data?.message || e.message);
+        }
       },
 
       markNotificationRead: async (id) => {
@@ -103,7 +116,9 @@ export const useAuthStore = create<AuthState>()(
           await authAPI.markNotificationRead(id);
           const ns = get().notifications.map(n => n._id === id || id === 'all' ? { ...n, read: true } : n);
           set({ notifications: ns, unreadCount: ns.filter(n => !n.read).length });
-        } catch {}
+        } catch (e: any) {
+          console.warn('[AuthStore] Failed to mark notification as read:', e?.response?.data?.message || e.message);
+        }
       },
       
       unlockReward: async (rewardId, xpCost) => {

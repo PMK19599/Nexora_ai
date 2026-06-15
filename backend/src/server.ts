@@ -17,8 +17,14 @@ const uploadDir = process.platform === 'win32'
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 (async () => {
-  // Connect to DB (auto-fallback to in-memory if no MongoDB)
-  await connectDB();
+  try {
+    // Connect to DB (auto-fallback to in-memory if no MongoDB)
+    await connectDB();
+  } catch (e: any) {
+    console.error('\n❌ Fatal: Could not establish any database connection.');
+    console.error(`   ${e.message}\n`);
+    process.exit(1);
+  }
 
   const httpServer = createServer(app);
 

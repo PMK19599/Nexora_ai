@@ -164,7 +164,9 @@ export const createGameFromPDF = async (req: AuthRequest, res: Response, next: N
     const text = pdfData.text;
 
     // Clean up local file temp storage
-    try { fs.unlinkSync(file.path); } catch {}
+    try { fs.unlinkSync(file.path); } catch (err: any) {
+      console.warn(`[createGameFromPDF] Failed to clean up temp file "${file.path}":`, err.message);
+    }
 
     if (!text || text.trim().length < 50) {
       res.status(400).json({ success: false, message: 'Could not extract enough text from the PDF. Try a different file.' });

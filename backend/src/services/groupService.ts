@@ -1,5 +1,6 @@
-import { StudyGroup, GroupMeeting, User, Notification } from '../models';
+import { StudyGroup, GroupMeeting, User } from '../models';
 import { Types } from 'mongoose';
+import { createNotification } from '../utils/controllerUtils';
 
 export const calculateCompatibility = (u1: any, u2: any): number => {
   let s = 0;
@@ -42,7 +43,7 @@ export const joinGroup = async (userId: string, groupId: string) => {
   const role = roles.find(r => !taken.includes(r)) || 'member';
   g.members.push({ userId: new Types.ObjectId(userId), role, joinedAt: new Date() });
   await g.save();
-  for (const m of g.members) { if (m.userId.toString() !== userId) await Notification.create({ userId: m.userId, type: 'group', title: 'New Member', message: 'A new member joined your group.', data: { groupId: g._id } }); }
+  for (const m of g.members) { if (m.userId.toString() !== userId) await createNotification(m.userId, 'group', 'New Member', 'A new member joined your group.', { groupId: g._id }); }
   return g;
 };
 
@@ -54,6 +55,6 @@ export const scheduleMeeting = async (groupId: string, userId: string, data: any
   if (!g) throw new Error('Not found');
   if (!g.members.some(m => m.userId.toString() === userId)) throw new Error('Not a member');
   const meeting = await GroupMeeting.create({ groupId: new Types.ObjectId(groupId), title: data.title, agenda: data.agenda, scheduledAt: new Date(data.scheduledAt), duration: data.duration || 60, attendees: g.members.map(m => m.userId) });
-  for (const m of g.members) await Notification.create({ userId: m.userId, type: 'group', title: 'Meeting Scheduled', message: `"${data.title}" scheduled.`, data: { meetingId: meeting._id, groupId } });
+  for (const m of g.members) await createNotification(m.userId, 'group', 'Meeting Scheduled', `"${data.title}" scheduled.`, { meetingId: meeting._id, groupId });
   return meeting;
 };

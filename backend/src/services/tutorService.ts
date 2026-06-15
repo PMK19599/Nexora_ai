@@ -1,5 +1,6 @@
-import { PeerTutor, PeerSession, User, StudentProgress, Notification } from '../models';
+import { PeerTutor, PeerSession, User, StudentProgress } from '../models';
 import { Types } from 'mongoose';
+import { createNotification } from '../utils/controllerUtils';
 
 export const calculateMatchScore = (tutor: any, student: any, subject: string): number => {
   let score = 0;
@@ -21,14 +22,14 @@ export const requestSession = async (studentId: string, tutorId: string, subject
   const tutor = await PeerTutor.findById(tutorId).populate('userId');
   if (!tutor) throw new Error('Tutor not found');
   const session = await PeerSession.create({ tutorId: (tutor.userId as any)._id, studentId: new Types.ObjectId(studentId), subject, scheduledAt: new Date(scheduledAt), duration, status: 'pending' });
-  await Notification.create({ userId: (tutor.userId as any)._id, type: 'tutor', title: 'New Tutoring Request', message: `New request for ${subject}`, data: { sessionId: session._id } });
+  await createNotification((tutor.userId as any)._id, 'tutor', 'New Tutoring Request', `New request for ${subject}`, { sessionId: session._id });
   return session;
 };
 
 export const acceptSession = async (sessionId: string, tutorUserId: string) => {
   const s = await PeerSession.findOneAndUpdate({ _id: sessionId, tutorId: new Types.ObjectId(tutorUserId), status: 'pending' }, { status: 'accepted' }, { new: true });
   if (!s) throw new Error('Session not found');
-  await Notification.create({ userId: s.studentId, type: 'tutor', title: 'Session Accepted!', message: `Your ${s.subject} session was accepted.`, data: { sessionId: s._id } });
+  await createNotification(s.studentId, 'tutor', 'Session Accepted!', `Your ${s.subject} session was accepted.`, { sessionId: s._id });
   return s;
 };
 

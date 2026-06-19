@@ -65,7 +65,7 @@ export default function LoginPage() {
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/80 dark:bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
             <div className="lg:hidden text-5xl mb-3 animate-float">✦</div>
             <h2 className="text-2xl font-bold gradient-text">Welcome Back</h2>

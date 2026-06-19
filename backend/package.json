@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seeders/seed.ts",
     "test": "jest --forceExit --detectOpenHandles"
@@ -57,6 +57,6 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.3"
+    "typescript": "5.7.3"
   }
 }

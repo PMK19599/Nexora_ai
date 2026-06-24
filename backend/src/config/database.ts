@@ -25,6 +25,7 @@ const connectDB = async (): Promise<void> => {
   } catch (e: any) {
     console.error('❌ [DatabaseConfig] Failed to start in-memory MongoDB:', e.message);
     console.error('   Install MongoDB or use Atlas: https://cloud.mongodb.com\n');
+    throw new Error(`Database connection failed: ${e.message}`);
   }
 };
 

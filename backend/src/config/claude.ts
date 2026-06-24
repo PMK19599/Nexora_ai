@@ -22,5 +22,9 @@ export const askClaude = async (prompt: string, system = 'You are an expert AI e
 export const askClaudeJSON = async <T>(prompt: string, system = 'You are an expert AI education assistant. Always respond with valid JSON only, no markdown.', maxTokens = 4096): Promise<T> => {
   const raw = await askClaude(prompt, system, maxTokens);
   const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  return JSON.parse(cleaned) as T;
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch (e: any) {
+    throw new Error(`Claude returned invalid JSON: ${e.message}. Response preview: "${cleaned.substring(0, 200)}"`);
+  }
 };

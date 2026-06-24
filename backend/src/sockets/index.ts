@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { User, PeerSession, Notification } from '../models';
+import { getJwtSecret } from '../middleware/auth';
 
 const onlineUsers = new Map<string, { userId: string; socketId: string; name: string }>();
 
@@ -12,7 +13,7 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
     try {
       const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
       if (!token) return next(new Error('Auth required'));
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'neurolearn-jwt-secret-dev-2026') as { id: string };
+      const decoded = jwt.verify(token, getJwtSecret()) as { id: string };
       const user = await User.findById(decoded.id);
       if (!user) return next(new Error('User not found'));
       (socket as any).userId = user._id.toString();

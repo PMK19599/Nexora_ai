@@ -23,9 +23,21 @@ app.use('/api/', rateLimit({
   message: { success: false, message: 'Too many requests, please try again later.' },
 }));
 
-// CORS — permissive in dev
+// CORS — restrict origins in production, permissive in dev
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+  : null;
+
 app.use(cors({
-  origin: (_origin, cb) => cb(null, true),
+  origin: (origin, cb) => {
+    // In production, only allow configured origins
+    if (process.env.NODE_ENV === 'production' && allowedOrigins) {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error('Not allowed by CORS'));
+    }
+    // In development, allow all origins
+    cb(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

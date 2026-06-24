@@ -1,4 +1,5 @@
 import { Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import { AuthRequest } from '../types';
 import * as svc from '../services/tutorService';
 import { PeerTutor, PeerSession, User } from '../models';
@@ -9,13 +10,13 @@ const ensureSampleTutors = async (currentUserId: string) => {
   const count = await PeerTutor.countDocuments();
   if (count > 0) return;
 
-  // Create sample tutor users + profiles
+  // Create sample tutor users + profiles (random passwords — these are non-login demo accounts)
   const tutorData = [
-    { name: 'Emma Wilson', email: `tutor_emma_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'], subjects: ['React', 'Node.js', 'TypeScript', 'MongoDB'], bio: 'Full-stack developer with 3 years experience. I love helping others learn web development!', rating: 4.7 },
-    { name: 'James Chen', email: `tutor_james_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], subjects: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], bio: 'ML engineer passionate about making AI accessible to everyone.', rating: 4.5 },
-    { name: 'Sarah Park', email: `tutor_sarah_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['Algorithms', 'Data Structures', 'System Design', 'Java'], subjects: ['Algorithms', 'Data Structures', 'System Design', 'Java'], bio: 'Ex-Google engineer. Specialized in interview prep and system design.', rating: 4.9 },
-    { name: 'Raj Patel', email: `tutor_raj_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['Cloud Computing', 'AWS', 'Docker', 'Kubernetes'], subjects: ['AWS', 'Docker', 'Kubernetes', 'DevOps'], bio: 'Cloud architect helping students master DevOps and cloud infrastructure.', rating: 4.3 },
-    { name: 'Lisa Nguyen', email: `tutor_lisa_${Date.now()}@nexora.ai`, password: 'tutor123456', skills: ['Mathematics', 'Statistics', 'Calculus', 'Linear Algebra'], subjects: ['Calculus', 'Statistics', 'Linear Algebra', 'Probability'], bio: 'Math PhD student. Making complex math concepts simple and fun!', rating: 4.6 },
+    { name: 'Emma Wilson', email: `tutor_emma_${Date.now()}@nexora.ai`, password: crypto.randomBytes(24).toString('base64'), skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'], subjects: ['React', 'Node.js', 'TypeScript', 'MongoDB'], bio: 'Full-stack developer with 3 years experience. I love helping others learn web development!', rating: 4.7 },
+    { name: 'James Chen', email: `tutor_james_${Date.now()}@nexora.ai`, password: crypto.randomBytes(24).toString('base64'), skills: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], subjects: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'], bio: 'ML engineer passionate about making AI accessible to everyone.', rating: 4.5 },
+    { name: 'Sarah Park', email: `tutor_sarah_${Date.now()}@nexora.ai`, password: crypto.randomBytes(24).toString('base64'), skills: ['Algorithms', 'Data Structures', 'System Design', 'Java'], subjects: ['Algorithms', 'Data Structures', 'System Design', 'Java'], bio: 'Ex-Google engineer. Specialized in interview prep and system design.', rating: 4.9 },
+    { name: 'Raj Patel', email: `tutor_raj_${Date.now()}@nexora.ai`, password: crypto.randomBytes(24).toString('base64'), skills: ['Cloud Computing', 'AWS', 'Docker', 'Kubernetes'], subjects: ['AWS', 'Docker', 'Kubernetes', 'DevOps'], bio: 'Cloud architect helping students master DevOps and cloud infrastructure.', rating: 4.3 },
+    { name: 'Lisa Nguyen', email: `tutor_lisa_${Date.now()}@nexora.ai`, password: crypto.randomBytes(24).toString('base64'), skills: ['Mathematics', 'Statistics', 'Calculus', 'Linear Algebra'], subjects: ['Calculus', 'Statistics', 'Linear Algebra', 'Probability'], bio: 'Math PhD student. Making complex math concepts simple and fun!', rating: 4.6 },
   ];
 
   for (const td of tutorData) {
